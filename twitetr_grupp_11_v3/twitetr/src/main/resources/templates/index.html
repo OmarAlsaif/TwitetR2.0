@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Exo&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
+  <link rel="shortcut icon" href="../static/wikilogo.png" />
+  <title>Twitetr</title>
+</head>
+
+<body>
+  <header id="header">
+    <nav>
+       <a href="/" id="headtitle"><b>Twitetr</b> - check yuor bad spelling</a>
+       #if($screen_name)
+       <div id="log_in">
+         
+   		 <p id="test2">$screen_name</p>
+        <a href="/logout"><button id="button2" type="submit">Sign out</button></a>
+ 		 #end
+
+      </div>
+    </nav>
+  </header>
+
+  <div class="wrapper">
+	
+	#if($loggedIn != "true")
+	<form id="paper" action="/login">
+	#end
+	
+	#if($sentenceChecked!="true")
+    <form id="paper" action="/tweetcheck">
+    #end
+    
+    #if($sentenceChecked=="true")
+    <form id="paper" action="/tweet">
+    #end
+    
+      <h1>Write A Tweet</h1>
+      <textarea id="jabba2" maxlength="280" rows="5" cols="50" maxlength="280" placeholder="Write your text here... (max 280 characters)"
+        name="userTweet" #if($sentenceChecked=="true") readonly #end>#if ($query)$query #end</textarea>
+      <br>
+      
+
+	#if($loggedIn != "true")
+      <a href="/login"><input type="image" src="images/sign-in-with-twitter.png"/></a>
+	#end
+	
+	#if($loggedIn == "true")
+	 <button id="button" type="submit">Tweeta</button>
+	#end
+            
+    </form>
+
+	  #if($sentenceChecked=="true")
+      <h2>Correction - click on the red words to correct them</h2>
+      <div class="form-group">
+        <label for="mytext"> </label>
+        <div id="jabba" rows="5" cols="50" name="maintext">#if($librisError=="true")Libris kunde inte hitta några fel #end</div>
+      </div>
+      #end
+
+  </div>
+  
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+    crossorigin="anonymous"></script>
+
+  <script>
+   
+    var wordarray = [];
+    var words = "$suggestedSentence"; //variabel som lagrar förslagna meningen
+    var changedCounter = 0;
+    var redWords = []; //array som lagrar felstavade ord
+    var ogmessage = "$query"; //här lagras ursprungliga meddelandet
+    var message = []; //här lagras den nya meningen som skickas till twitter
+    message = ogmessage.split(' ');
+    wordarray = words.split(' ');
+    var indexController = 1;
+    #foreach ($test in $words)
+        redWords.push($test.getIndex());
+        changedCounter++;
+    #end
+    
+    //denna körs om användarens meddelande inte hade några stavningsfel
+    if (changedCounter == 0) {
+      document.getElementById("button").style.borderColor = "green";
+    }
+
+    for (let i = 0; i < wordarray.length; i++) {
+        //skapar ett nytt div-element för varje ord i arrayen med rättade orden
+        let element = document.createElement('div');
+        element.textContent = wordarray[i] + " ";
+        for (let i2 = 0; i2 < redWords.length; i2++) {
+            if (redWords[i2] == i) {
+               	//dessa ord är felstavade och markeras som röda genom att ändra dess CSS.
+                document.getElementById("jabba").style.borderColor = "red";
+                document.getElementById("button").style.borderColor = "red";
+
+
+                element.textContent = wordarray[i] + " ";
+                element.style.color = 'red';
+                
+                //Varje felstavat ord ges en EventListener för att ändra orginalmeddelandet
+                //och färgen på ordet när det trycks på
+                element.addEventListener('click', function () {
+                	
+                    if (changedCounter == indexController) {
+                        document.getElementById("jabba").style.borderColor = "green";
+                        document.getElementById("button").style.borderColor = "green";
+                      }
+                    
+                    indexController++;
+                    
+                    //ändrar nya meningen med efter röda ordet tryckts på av användaren
+                	message[i] = wordarray[i];
+						
+                      var myTextArea = $('#jabba2');
+                      myTextArea.val('');
+                      for (let iterator = 0; iterator < message.length; iterator++) {
+                        myTextArea.val(myTextArea.val() + message[iterator] + ' ');
+                      }
+                      element.style.color = 'green';
+                      //Tar till slut bort lyssnaren, när ordet väl tryckts på
+                      element.removeEventListener('click', arguments.callee);
+                    });
+            }
+        }
+        document.getElementById("jabba").appendChild(element);
+    }
+
+  </script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript">
+        var tweetSuccess = "$tweetSent";
+        var tweetFail = "$tweetFailed";
+        if (tweetSuccess == "true") {
+            swal("Yay!", "Tweet skickat!", "success");
+        }
+        if (tweetFail == "true") {
+            swal("Oops", "Något gick snett", "error");
+        }
+    </script>
+<script language="javascript" type="text/javascript">
+var scrt_var = 10; 
+</script>
+
+</body>
+
+</html>
